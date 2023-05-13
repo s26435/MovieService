@@ -1,35 +1,31 @@
 package Service;
 
-
+import Exceptions.*;
 import Model.Film;
+import Repository.MovieRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class FilmService {
 
-    private final List<Film> films = new ArrayList<>();
-    public FilmService() {
-        films.add(new Film(1, "Jeden", "Fantasy"));
-        films.add(new Film(2, "Dwa", "Horror"));
-        films.add(new Film(3, "Trzy", "Action"));
+    private final MovieRepository movieRepository;
+
+    public FilmService(MovieRepository movieRepository) {
+        this.movieRepository = movieRepository;
     }
 
     public List<Film> getFilms(){
-        return films;
+        return movieRepository.findAll();
     }
 
-    public Film getFilmById(int id){
-        for( Film film : films){
-            if(film.getId() == id) return film;
-        }
-        return null;
+    public Film getFilmById(Long id){
+        return movieRepository.findById(id).orElseThrow(MovieNotFoundException::new);
     }
 
     public void addFilm(Film film) {
-        films.add(film);
+        movieRepository.save(film);
     }
 
     public void updateMovie(Film filmWithUpdatedData){
@@ -47,15 +43,22 @@ public class FilmService {
         }else {
             throw new IllegalArgumentException("Nie udało sie zaktualizować, film o id " + filmWithUpdatedData.getId() + " nie został odnaleziony w bazie");
         }
+        movieRepository.save(movieInBase);
     }
 
-    public void deleteFilm(int id){
+    public void deleteFilm(Long id){
         Film movieToDelete = getFilmById(id);
         if (movieToDelete != null){
-            films.remove(movieToDelete);
+          movieRepository.deleteById(id);
         }else {
-            throw new IllegalArgumentException("Nie udało się usunąć, film o id " + id + " nie został odnaleziony w bazie");
+            throw new IllegalArgumentException("Nie udało się usunąć, film  id = " + id + ", nie został odnaleziony w bazie");
         }
     }
 
-}
+    public void changeIsA(Long id) {
+       Film target = getFilmById(id);
+       target.setIsAvailable(!target.getIsAvailable());
+       movieRepository.save(target);
+       }
+    }
+
